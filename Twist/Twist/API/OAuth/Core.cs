@@ -1,44 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net.Http.Headers;
 
 namespace Twist.API.OAuth
 {
 	/// <summary>
-	/// OAuth 認証コアクラス
+	/// Kisaragi 時報システムを Twitterへリンクさせるための認証クラス
 	/// </summary>
 	public class Core
 	{
-		protected const string REQUEST_TOKEN_URL = "https://api.twitter.com/oauth/request_token";
-		protected const string ACCESS_TOKEN_URL = "https://api.twitter.com/oauth/access_token";
-		protected const string AUTHORIZE_URL = "https://api.twitter.com/oauth/authorize";
+
+		#region Constant Variable
+
+		private const string REQUEST_TOKEN_URL = "https://api.twitter.com/oauth/request_token";
+		private const string ACCESS_TOKEN_URL = "https://api.twitter.com/oauth/access_token";
+		private const string AUTHORIZE_URL = "https://api.twitter.com/oauth/authorize";
+
+		#endregion
+
+		#region Properties
 
 		/// <summary>
 		///  HttpClient インスタンス の管理を行います。
 		/// </summary>
-		public HttpClient Http { get; set; }
+		private HttpClient _Http { get; set; }
 
 		/// <summary>
 		/// トークン生成時の乱数 インスタンス
 		/// </summary>
-		public Random Rand { get; set; } = new Random();
+		private Random _Rand { get; set; } = new Random();
+
+		#endregion
+
+		#region Constractor 
 
 		/// <summary>
-		/// 
+		/// AuthKisaragi Constractor
 		/// </summary>
 		/// <param name="httpClient"></param>
 		public Core(HttpClient httpClient)
 		{
 			ServicePointManager.Expect100Continue = false;
-			Http = httpClient;
+			_Http = httpClient;
 		}
+
+		#endregion
+
+		#region OAuth Authorize Method's.
 
 		/// <summary>
 		/// リクエストトークンの取得を行います。
@@ -78,7 +94,7 @@ namespace Twist.API.OAuth
 		/// </summary>
 		/// <param name="PIN"></param>
 		/// <returns></returns>
-		public async Task<(string accessToken, string accessTokenSecret)> GetAccessTokenAsync(Credentials credentials, string PIN)
+		public async Task<(string at, string ats, string uid, string sn)> GetAccessTokenAsync(Credentials credentials, string PIN)
 		{
 			Debug.WriteLine("------------ アクセストークン 生成開始 ----------------- >> " + PIN);
 
@@ -96,7 +112,7 @@ namespace Twist.API.OAuth
 
 			Debug.WriteLine("------------ アクセストークン 生成完了 -----------------");
 
-			return (credentials.AccessToken, credentials.AccessTokenSecret);
+			return (credentials.AccessToken, credentials.AccessTokenSecret, credentials.UserId, credentials.ScreenName);
 		}
 
 		/// <summary>
@@ -119,7 +135,7 @@ namespace Twist.API.OAuth
 		/// <param name="oauthParameters"></param>
 		/// <returns></returns>
 		public async Task<string> RequestAsync(string consumerKey, string consumerKeySecret,
-			string token, string tokenSecret, string url, HttpMethod type, IDictionary<string, string> parameters = null)
+			string token, string tokenSecret, string url, HttpMethod type, IDictionary<string, string> parameters = null, Stream stream = null)
 		{
 			Debug.WriteLine("------------ リクエスト開始 ----------------- >> " + type.ToString() + " " + url);
 
@@ -161,7 +177,18 @@ namespace Twist.API.OAuth
 					{
 						// ユーザが指定するパラメータを body に格納 e.g.) [status]
 						if (parameters != null)
-							request.Content = new FormUrlEncodedContent(parameters);
+						{
+							if (stream == null)
+							{
+								request.Content = new FormUrlEncodedContent(parameters);
+							}
+							else
+							{
+								var multi = new MultipartFormDataContent("hoge");
+								multi.Add(new StreamContent(stream), "media");
+								request.Content = multi;
+							}
+						}
 
 						Debug.WriteLine($"---------------- リクエストヘッダ情報 {type.ToString()} --------------------");
 						Debug.WriteLine($" Body   : {await request.Content.ReadAsStringAsync()}");
@@ -170,7 +197,7 @@ namespace Twist.API.OAuth
 					}
 
 					request.Headers.ExpectContinue = false;
-					response = await Http.SendAsync(request);
+					response = await _Http.SendAsync(request);
 
 					if (response.StatusCode != HttpStatusCode.OK)
 						throw new HttpRequestException($"HTTP 通信エラーが発生しました。" +
@@ -266,7 +293,7 @@ namespace Twist.API.OAuth
 		private string _GenerateNonce(int len)
 		{
 			string str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-			return str.Aggregate(new StringBuilder(len), (sb, s) => sb.Append(str[Rand.Next(str.Length)])).ToString();
+			return str.Aggregate(new StringBuilder(len), (sb, s) => sb.Append(str[_Rand.Next(str.Length)])).ToString();
 		}
 
 		/// <summary>
@@ -285,5 +312,8 @@ namespace Twist.API.OAuth
 
 			return result.ToString();
 		}
+
+		#endregion
+
 	}
 }

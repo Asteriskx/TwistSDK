@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace Twist.API.OAuth
 {
@@ -53,10 +54,12 @@ namespace Twist.API.OAuth
 		/// <param name="type"></param>
 		/// <param name=""></param>
 		/// <returns></returns>
-		public Task<string> Request(string url, HttpMethod type, IDictionary<string, string> query)
+		public Task<string> Request(string url, HttpMethod type, IDictionary<string, string> query, Stream stream = null)
 		{
-			return this.Auth.RequestAsync(Credentials.ConsumerKey, Credentials.ConsumerKeySecret,
-				Credentials.AccessToken, Credentials.AccessTokenSecret, url, type, query);
+			if (stream == null)
+				return this.Auth.RequestAsync(Credentials.ConsumerKey, Credentials.ConsumerKeySecret, Credentials.AccessToken, Credentials.AccessTokenSecret, url, type, query);
+			else
+				return this.Auth.RequestAsync(Credentials.ConsumerKey, Credentials.ConsumerKeySecret, Credentials.AccessToken, Credentials.AccessTokenSecret, url, type, query, stream);
 		}
 
 		/// <summary>
@@ -65,7 +68,7 @@ namespace Twist.API.OAuth
 		/// <param name="PIN"></param>
 		/// <returns></returns>
 		public async Task GetAccessTokenAsync(string pin) =>
-			(this.AccessToken, this.AccessTokenSecret) = await this.Auth.GetAccessTokenAsync(Credentials, pin);
+			(this.AccessToken, this.AccessTokenSecret, this.UserId, this.ScreenName) = await this.Auth.GetAccessTokenAsync(Credentials, pin);
 
 	}
 }
