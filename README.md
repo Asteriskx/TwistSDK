@@ -1,2 +1,2 @@
-# Twist
-Twist is Twitter API for C Sharp.
+# TwistSDK
+TwistSDK is Twitter Wrapper API for C Sharp.
