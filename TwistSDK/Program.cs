@@ -11,9 +11,8 @@ namespace TwistSDK
 {
 	class Program
 	{
-		private static Twitter _Twitter { get; set; }
-		private static HttpClient _Client { get; set; }
-		private static HttpClientHandler _ClientHandler { get; set; } = new HttpClientHandler();
+
+		#region Field
 
 		#region API Keys
 
@@ -21,6 +20,18 @@ namespace TwistSDK
 		private const string _ConsumerSecret = "your consumer secret";
 
 		#endregion
+
+		#endregion Field
+
+		#region Properties
+
+		private static Twitter _Twitter { get; set; }
+		private static HttpClient _Client { get; set; }
+		private static HttpClientHandler _ClientHandler { get; set; } = new HttpClientHandler();
+
+		#endregion Properties
+
+		#region Main Method
 
 		static async Task Main(string[] args)
 		{
@@ -64,5 +75,8 @@ namespace TwistSDK
 #endif
 
 		}
+
+		#endregion Main Method
+
 	}
 }

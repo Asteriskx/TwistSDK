@@ -54,8 +54,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Twist\Twist\Twist.csproj">
-      <Project>{b7af9449-193a-4859-97e2-079021ad4de8}</Project>
+    <ProjectReference Include="..\Twist\Twist.csproj">
+      <Project>{3fd7a003-d97f-40f7-a0aa-ffaef62d3508}</Project>
       <Name>Twist</Name>
     </ProjectReference>
   </ItemGroup>

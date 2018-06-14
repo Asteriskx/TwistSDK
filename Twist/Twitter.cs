@@ -121,5 +121,6 @@ namespace Twist
 			(this._Core.AccessToken, this._Core.AccessTokenSecret, this._Core.UserId, this._Core.ScreenName) = await this._Core.GetAccessTokenAsync(AccessTokenUrl, pin);
 
 		#endregion TwitterAPI Access Wrapper Methods
+
 	}
 }
