@@ -37,21 +37,21 @@ namespace Twist.API
 		/// <summary>
 		/// Core クラスコンストラクタ : インスタンス生成用
 		/// </summary>
-		/// <param name="ck"></param>
-		/// <param name="cs"></param>
-		/// <param name="client"></param>
+		/// <param name="ck"> Consumer Key </param>
+		/// <param name="cs"> Consumer Secret </param>
+		/// <param name="client"> HttpClient </param>
 		public Core(string ck, string cs, HttpClient client) : base(ck, cs) => _Client = client;
 
 		/// <summary>
 		/// Core クラスコンストラクタ : 設定保持用
 		/// </summary>
-		/// <param name="ck"></param>
-		/// <param name="cs"></param>
-		/// <param name="at"></param>
-		/// <param name="ats"></param>
-		/// <param name="id"></param>
-		/// <param name="name"></param>
-		/// <param name="client"></param>
+		/// <param name="ck"> Consumer Key </param>
+		/// <param name="cs"> Consumer Secret </param>
+		/// <param name="at"> Access Token </param>
+		/// <param name="ats"> Access Token Secret </param>
+		/// <param name="id"> User ID </param>
+		/// <param name="name"> Screen Name </param>
+		/// <param name="client"> HttpClient </param>
 		public Core(string ck, string cs, string at, string ats, string id, string name, HttpClient client)
 			: base(ck, cs, at, ats, id, name) => _Client = client;
 
@@ -62,6 +62,8 @@ namespace Twist.API
 		/// <summary>
 		/// リクエストトークンの取得を行います。
 		/// </summary>
+		/// <param name="url"> リクエストトークン取得用のエンドポイントURL </param>
+		/// <returns></returns>
 		public async Task GetRequestTokenAsync(string url)
 		{
 			Debug.WriteLine("------------ リクエストトークン 生成開始 -----------------");
@@ -78,7 +80,8 @@ namespace Twist.API
 		/// <summary>
 		/// 認証ページの URL を取得します。
 		/// </summary>
-		/// <returns></returns>
+		/// <param name="url"> 認証ページのエンドポイントURL </param>
+		/// <returns> 認証ページの URL </returns>
 		public Uri GetAuthorizeUrl(string url)
 		{
 			Debug.WriteLine("------------ 認証用URL 取得シーケンス実施 -----------------");
@@ -92,8 +95,9 @@ namespace Twist.API
 		/// <summary>
 		/// Access Token の取得を行います。
 		/// </summary>
-		/// <param name="pin"></param>
-		/// <returns></returns>
+		/// <param name="url"> Access Token 取得を行うエンドポイントURL </param>
+		/// <param name="pin"> 認証ページにて取得した PIN コード </param>
+		/// <returns> AccessToken, AccessTokenSecret, ユーザID, スクリーンネームを Tuple 形式にて返却 </returns>
 		public async Task<(string at, string ats, string uid, string sn)> GetAccessTokenAsync(string url, string pin)
 		{
 			Debug.WriteLine("------------ アクセストークン 生成開始 ----------------- >> " + pin);
@@ -118,7 +122,9 @@ namespace Twist.API
 		/// 認証パラメータを生成します。
 		/// </summary>
 		/// <param name="parameters"></param>
-		/// <returns></returns>
+		/// <param name="spl"> 分割文字(規定値：&) </param>
+		/// <param name="braket"> ブラケット(規定値："") </param>
+		/// <returns> 認証パラメータ </returns>
 		private string _OAuthParameters(IDictionary<string, string> parameters, string spl = "&", string braket = "")
 		{
 			return string.Join(spl, from p in parameters select $"{UrlEncode(p.Key)}={braket}{UrlEncode(p.Value)}{braket}");
@@ -127,11 +133,11 @@ namespace Twist.API
 		/// <summary>
 		/// Twitter に対して GETリクエスト/POSTリクエスト を行います。
 		/// </summary>
-		/// <param name="url"></param>
-		/// <param name="type"></param>
-		/// <param name="parameters"></param>
-		/// <param name="oauthParameters"></param>
-		/// <returns></returns>
+		/// <param name="url"> リクエストURL </param>
+		/// <param name="type"> GET/POST タイプ </param>
+		/// <param name="parameters"> リクエストデータ </param>
+		/// <param name="oauthParameters"> 認証パラメータ </param>
+		/// <returns> リクエスト結果(謎の拡張子：JSON) </returns>
 		public async Task<string> RequestAsync(string ck, string cs, string token, string ts,
 			string url, HttpMethod type, IDictionary<string, string> parameters = null, Stream stream = null)
 		{
@@ -212,12 +218,12 @@ namespace Twist.API
 		/// <summary>
 		/// Signature 生成を行います。
 		/// </summary>
-		/// <param name="ck"></param>
-		/// <param name="ts"></param>
-		/// <param name="httpMethod"></param>
-		/// <param name="url"></param>
-		/// <param name="parameters"></param>
-		/// <returns></returns>
+		/// <param name="ck"> Consumer Key </param>
+		/// <param name="ts"> Token Secret </param>
+		/// <param name="httpMethod"> http method data </param>
+		/// <param name="url"> シグネチャ生成対象URL </param>
+		/// <param name="parameters"> 認証パラメータ </param>
+		/// <returns> HMACSHA化された Base64 シグネチャ </returns>
 		private string _GenerateSignature(string ck, string ts, string httpMethod, string url, IDictionary<string, string> parameters)
 		{
 			Debug.WriteLine("------------ シグネチャ生成開始 -----------------");
@@ -237,9 +243,9 @@ namespace Twist.API
 		/// <summary>
 		/// 認証にて使用するパラメータを構築します。
 		/// </summary>
-		/// <param name="token"></param>
-		/// <param name="ck"></param>
-		/// <returns></returns>
+		/// <param name="token"> トークンデータ </param>
+		/// <param name="ck"> Consumer Key </param>
+		/// <returns> ソート後の認証パラメータ </returns>
 		private SortedDictionary<string, string> _GenerateParameters(string token, string ck)
 		{
 			Debug.WriteLine("------------ パラメータ生成開始 -----------------");
@@ -270,6 +276,11 @@ namespace Twist.API
 			return result;
 		}
 
+		/// <summary>
+		/// 与えられた文字列を分割します。
+		/// </summary>
+		/// <param name="query"> 分割前の文字列 </param>
+		/// <returns> 分割したデータ(Dictionary 形式) </returns>
 		private Dictionary<string, string> _ParseStrings(string query)
 		{
 			var persedStr = new Dictionary<string, string>();
@@ -286,6 +297,8 @@ namespace Twist.API
 		/// <summary>
 		/// ワンタイムトークンを生成します。
 		/// </summary>
+		/// <param name="len"> トークン生成の文字数 </param>
+		/// <returns> ワンタイムトークン </returns>
 		private string _GenerateNonce(int len)
 		{
 			string str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -295,6 +308,8 @@ namespace Twist.API
 		/// <summary>
 		/// 与えられた URL をエンコードします。
 		/// </summary>
+		/// <param name="value"> エンコード対象の URL </param>
+		/// <returns> エンコード後の URL </returns>
 		public string UrlEncode(string value)
 		{
 			string unreserved = @"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~";
