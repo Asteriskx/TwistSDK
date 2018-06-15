@@ -89,7 +89,7 @@ namespace Twist.API
 			if (base.RequestToken != null)
 				return new Uri($"{url}?oauth_token={base.RequestToken}");
 			else
-				throw new ApplicationException("リクエストトークンが未設定です。GetRequestTokenAsync() をコールしてください。");
+				throw new Exception("リクエストトークンが未設定です。GetRequestTokenAsync() をコールしてください。");
 		}
 
 		/// <summary>

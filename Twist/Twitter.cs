@@ -80,19 +80,18 @@ namespace Twist
 		#region TwitterAPI Access Wrapper Methods
 
 		/// <summary>
-		/// 認証を実施します。
+		/// 認証用のURLを返却します。
 		/// </summary>
-		/// <returns></returns>
-		public async Task AuthorizeAsync()
+		/// <returns> 認証用のURL </returns>
+		public async Task<string> GenerateAuthorizeAsync()
 		{
 			Debug.WriteLine("------------ 認証シーケンス開始 -----------------");
 
 			await this._Core.GetRequestTokenAsync(RequestTokenUrl);
-
 			Uri url = this._Core.GetAuthorizeUrl(AuthorizeUrl);
-			Process.Start(url.ToString());
 
 			Debug.WriteLine("------------ 認証シーケンス完了 ----------------- >> " + url.ToString());
+			return url.ToString();
 		}
 
 		/// <summary>

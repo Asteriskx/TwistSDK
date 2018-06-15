@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -39,7 +40,7 @@ namespace TwistSDK
 			_Twitter = new Twitter(_ConsumerKey, _ConsumerSecret, _Client);
 
 			Console.WriteLine(" ----------- 認証ページ表示開始 ------------------");
-			await _Twitter.AuthorizeAsync();
+			Process.Start(await _Twitter.GenerateAuthorizeAsync());
 			Console.WriteLine(" ----------- 認証ページ表示完了 ------------------");
 
 			var pin = string.Empty;
