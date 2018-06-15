@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>Twist</id>
+    <version>1.0.0</version>
+    <authors>Asteriskx</authors>
+    <owners>Asteriskx</owners>
+    <licenseUrl>https://github.com/Asteriskx/TwistSDK/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/Asteriskx/TwistSDK</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <description>Twist for Twitter Wrapper API Library for .NET Standard. </description>
+    <releaseNotes>nyan!</releaseNotes>
+    <copyright>Copyright (c) Asteriskx 2018.</copyright>
+    <tags>Twist</tags>
+  </metadata>
+      <files>
+        <file src="bin\Release\netstandard1.6\Twist.pdb" target="lib\net471" />
+    </files>
+</package>
