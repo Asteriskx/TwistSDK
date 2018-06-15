@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-using Newtonsoft.Json;
 using Twist;
 
 namespace TwistSDK
@@ -53,20 +50,15 @@ namespace TwistSDK
 
 			Console.WriteLine(" ----------- Twitter 投稿開始 ------------------");
 
-			// 画像投稿に関して
+			// 画像なしツイート
+			var text = "nyan!";
+			await _Twitter.UpdateWithTextAsync(text);
+
+			// 画像付きツイート
 			var imagePath = @"Your hope posting picture path.";
 			Console.Write($"picture path = {imagePath}\r\n");
 
-			using (var image = new FileStream(imagePath, FileMode.Open, FileAccess.Read))
-			{
-				// Twitter へ chunk upload を事前に行い、media_id を取得
-				var id = await _Twitter.Request(Twitter.ChunkUpload, HttpMethod.Post, new Dictionary<string, string>() { }, image);
-				dynamic deserialize = JsonConvert.DeserializeObject(id);
-
-				// 文字ツイートと画像を紐付ける => media_ids 
-				var query = new Dictionary<string, string> { { "status", "#Twist テスト" }, { "media_ids", deserialize.media_id_string.Value } };
-				await _Twitter.Request(Twitter.Update, HttpMethod.Post, query);
-			}
+			await _Twitter.UpdateWithMediaAsync(text, imagePath);
 
 			Console.WriteLine(" ----------- Twitter 投稿完了 ------------------");
 

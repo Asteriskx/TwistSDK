@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Diagnostics;
@@ -102,7 +103,7 @@ namespace Twist
 		/// <param name="query"> テキストデータ </param>
 		/// <param name="stream"> 画像データ(画像がない場合は、null扱い) </param>
 		/// <returns></returns>
-		public Task<string> Request(string url, HttpMethod type, IDictionary<string, string> query, Stream stream = null)
+		private Task<string> _Request(string url, HttpMethod type, IDictionary<string, string> query, Stream stream = null)
 		{
 			if (stream == null)
 				return this._Core.RequestAsync(this._Core.ConsumerKey, this._Core.ConsumerSecret, this._Core.AccessToken, this._Core.AccessTokenSecret, url, type, query);
@@ -111,9 +112,59 @@ namespace Twist
 		}
 
 		/// <summary>
+		/// Twitter へツイートを非同期にて行います。
+		/// </summary>
+		/// <param name="text">ツイート内容</param>
+		/// <returns></returns>
+		public async Task UpdateWithTextAsync(string text)
+		{
+			var query = new Dictionary<string, string> { { "status", text } };
+			await this._Request(Update, HttpMethod.Post, query);
+		}
+
+		/// <summary>
+		/// Twitter へ画像付きツイートを非同期にて行います。
+		/// </summary>
+		/// <param name="text">ツイート内容</param>
+		/// <param name="path">画像ファイルパス</param>
+		/// <returns></returns>
+		public async Task UpdateWithMediaAsync(string text, string path)
+		{
+			using (var image = new FileStream(path, FileMode.Open, FileAccess.Read))
+			{
+				var id = await this._Request(ChunkUpload, HttpMethod.Post, new Dictionary<string, string>() { }, image);
+				dynamic deserialize = JsonConvert.DeserializeObject(id);
+
+				var query = new Dictionary<string, string> { { "status", text }, { "media_ids", deserialize.media_id_string.Value } };
+				await this._Request(Update, HttpMethod.Post, query);
+			}
+		}
+
+		/// <summary>
+		/// Twitter へ画像付きツイートを非同期にて行います。
+		/// </summary>
+		/// <param name="text">ツイート内容</param>
+		/// <param name="stream">画像データ：Stream 形式</param>
+		/// <returns></returns>
+		public async Task UpdateWithMediaAsync(string text, Stream stream)
+		{
+			if (stream != null) 
+			{
+				var id = await this._Request(ChunkUpload, HttpMethod.Post, new Dictionary<string, string>() { }, stream);
+				dynamic deserialize = JsonConvert.DeserializeObject(id);
+
+				var query = new Dictionary<string, string> { { "status", text }, { "media_ids", deserialize.media_id_string.Value } };
+				await this._Request(Update, HttpMethod.Post, query);
+			}
+			else
+			{
+				throw new Exception("stream is Empty........");
+			}
+		}
+
+		/// <summary>
 		/// Access Token の取得を行うためのラッパーメソッド
 		/// </summary>
-		/// <param name="AccessTokenUrl"> Access Token を取得する際に必要なエンドポイントURL </param>
 		/// <param name="pin"> 認証時に表示された PIN コード </param>
 		/// <returns> 各種認証キー：ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret </returns>
 		public async Task GetAccessTokenAsync(string pin) =>

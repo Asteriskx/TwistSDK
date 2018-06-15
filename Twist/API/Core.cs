@@ -121,8 +121,8 @@ namespace Twist.API
 		/// <summary>
 		/// 認証パラメータを生成します。
 		/// </summary>
-		/// <param name="parameters"></param>
-		/// <param name="spl"> 分割文字(規定値：&) </param>
+		/// <param name="parameters"> 認証パラメータ生成用データ </param>
+		/// <param name="spl"> 分割文字(規定値：アンパサンド) </param>
 		/// <param name="braket"> ブラケット(規定値："") </param>
 		/// <returns> 認証パラメータ </returns>
 		private string _OAuthParameters(IDictionary<string, string> parameters, string spl = "&", string braket = "")
@@ -133,10 +133,14 @@ namespace Twist.API
 		/// <summary>
 		/// Twitter に対して GETリクエスト/POSTリクエスト を行います。
 		/// </summary>
+		/// <param name="ck"> Consumer Key </param>
+		/// <param name="cs"> Consumer Secret </param>
+		/// <param name="token"> Token </param>
+		/// <param name="ts"> Token Secret </param>
 		/// <param name="url"> リクエストURL </param>
 		/// <param name="type"> GET/POST タイプ </param>
 		/// <param name="parameters"> リクエストデータ </param>
-		/// <param name="oauthParameters"> 認証パラメータ </param>
+		/// <param name="stream"></param>
 		/// <returns> リクエスト結果(謎の拡張子：JSON) </returns>
 		public async Task<string> RequestAsync(string ck, string cs, string token, string ts,
 			string url, HttpMethod type, IDictionary<string, string> parameters = null, Stream stream = null)
