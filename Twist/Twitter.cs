@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.IO;
 using Twist.API;
+using Newtonsoft.Json.Linq;
 
 namespace Twist
 {
@@ -78,6 +79,16 @@ namespace Twist
 
 		#endregion Constractor
 
+		#region Inner class
+
+		private class MediaData
+		{
+			[JsonProperty("media_id_string")]
+			public string MediaIdString { get; set; }
+		}
+
+		#endregion Inner class
+
 		#region TwitterAPI Access Wrapper Methods
 
 		/// <summary>
@@ -122,6 +133,7 @@ namespace Twist
 			await this._Request(Update, HttpMethod.Post, query);
 		}
 
+
 		/// <summary>
 		/// Twitter へ画像付きツイートを非同期にて行います。
 		/// </summary>
@@ -133,9 +145,9 @@ namespace Twist
 			using (var image = new FileStream(path, FileMode.Open, FileAccess.Read))
 			{
 				var id = await this._Request(ChunkUpload, HttpMethod.Post, new Dictionary<string, string>() { }, image);
-				dynamic deserialize = JsonConvert.DeserializeObject(id);
+				var deserialize = JsonConvert.DeserializeObject<MediaData>(id).MediaIdString;
 
-				var query = new Dictionary<string, string> { { "status", text }, { "media_ids", deserialize.media_id_string.Value } };
+				var query = new Dictionary<string, string> { { "status", text }, { "media_ids", deserialize } };
 				await this._Request(Update, HttpMethod.Post, query);
 			}
 		}
@@ -148,12 +160,12 @@ namespace Twist
 		/// <returns></returns>
 		public async Task UpdateWithMediaAsync(string text, Stream stream)
 		{
-			if (stream != null) 
+			if (stream != null)
 			{
 				var id = await this._Request(ChunkUpload, HttpMethod.Post, new Dictionary<string, string>() { }, stream);
-				dynamic deserialize = JsonConvert.DeserializeObject(id);
+				var deserialize = JsonConvert.DeserializeObject<MediaData>(id).MediaIdString;
 
-				var query = new Dictionary<string, string> { { "status", text }, { "media_ids", deserialize.media_id_string.Value } };
+				var query = new Dictionary<string, string> { { "status", text }, { "media_ids", deserialize } };
 				await this._Request(Update, HttpMethod.Post, query);
 			}
 			else

@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Twist</id>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
     <authors>Asteriskx</authors>
     <owners>Asteriskx</owners>
     <licenseUrl>https://github.com/Asteriskx/TwistSDK/blob/master/LICENSE</licenseUrl>
@@ -14,7 +14,7 @@
     <tags>Twist</tags>
   </metadata>
       <files>
-        <file src="bin\Release\netstandard1.6\Twist.pdb" target="lib\net461" />
-        <file src="bin\Release\netstandard1.6\Twist.xml" target="lib\net461" />
+        <file src="bin\Release\netstandard2.0\Twist.pdb" target="lib\net461" />
+        <file src="bin\Release\netstandard2.0\Twist.xml" target="lib\net461" />
     </files>
 </package>
