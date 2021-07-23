@@ -54,6 +54,18 @@ namespace Twist.Core.Auth
         }
 
         /// <summary>
+        /// コンストラクタ : インスタンス生成用
+        /// </summary>
+        /// <param name="ck"> Consumer Key </param>
+        /// <param name="cs"> Consumer Secret </param>
+        /// <param name="client"> HttpClient </param>
+        internal Authenticator(string ck, string cs, string at, string ats, HttpClient client)
+        {
+            ICredentials = new TwistCredentials(ck, cs, at, ats);
+            _Client = client;
+        }
+
+        /// <summary>
         /// コンストラクタ : 設定保持用
         /// </summary>
         /// <param name="ck"> Consumer Key </param>

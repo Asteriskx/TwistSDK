@@ -40,6 +40,17 @@ namespace Twist
         /// <summary>
         /// コンストラクタ
         /// </summary>
+        /// <param name="ck"></param>
+        /// <param name="cs"></param>
+        /// <param name="at"></param>
+        /// <param name="ats"></param>
+        /// <param name="client"></param>
+        public Twitter(string ck, string cs, string at, string ats, HttpClient client) =>
+            _authenticator = new Authenticator(ck, cs, client);
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
         /// <param name="ck"> Consumer Key </param>
         /// <param name="cs"> Consumer Secret </param>
         /// <param name="at"> Access Token </param>

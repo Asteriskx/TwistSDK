@@ -10,7 +10,7 @@ namespace Twist.Core.Auth
         #region Constractor 
 
         /// <summary>
-        /// インスタンス生成用
+        /// コンストラクタ
         /// </summary>
         /// <param name="consumerKey"></param>
         /// <param name="consumerSecret"></param>
@@ -22,7 +22,23 @@ namespace Twist.Core.Auth
         }
 
         /// <summary>
-        /// 設定保持用
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="consumerKey"></param>
+        /// <param name="consumerSecret"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="accessTokenSecret"></param>
+        internal TwistCredentials(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret)
+        {
+            ICredentials = this;
+            ICredentials.ConsumerKey = consumerKey;
+            ICredentials.ConsumerSecret = consumerSecret;
+            ICredentials.AccessToken = accessToken;
+            ICredentials.AccessTokenSecret = accessTokenSecret;
+        }
+
+        /// <summary>
+        /// コンストラクタ
         /// </summary>
         /// <param name="consumerKey"></param>
         /// <param name="consumerSecret"></param>
