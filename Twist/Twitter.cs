@@ -46,7 +46,7 @@ namespace Twist
         /// <param name="ats"></param>
         /// <param name="client"></param>
         public Twitter(string ck, string cs, string at, string ats, HttpClient client) =>
-            _authenticator = new Authenticator(ck, cs, client);
+            _authenticator = new Authenticator(ck, cs, at, ats, client);
 
         /// <summary>
         /// コンストラクタ
