@@ -10,40 +10,51 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Twist.API
+using Twist.Auth.Interfaces;
+using Twist.Core.Auth.Interfaces;
+
+namespace Twist.Core.Auth
 {
 	/// <summary>
-	/// Twitter アクセスコアクラス
+	/// Twitter APIv1.1 認証周りを担当するクラス
 	/// </summary>
-	public class Core : Credentials
+	public class Authenticator : IAuthenticator
 	{
-
 		#region Properties
 
 		/// <summary>
-		///  HttpClient インスタンス の管理を行います。
+		/// HTTP クライアント
 		/// </summary>
 		private HttpClient _Client { get; set; }
 
 		/// <summary>
-		/// トークン生成時の乱数 インスタンス
+		/// トークン 生成時の乱数 インスタンス
 		/// </summary>
-		private Random _Rand { get; set; } = new Random();
+		private Random _SeedToken { get; set; } = new Random();
+
+		/// <summary>
+		/// 認証情報 : I/F経由用
+		/// </summary>
+		public ITwistCredentials ICredentials { get; set; }
 
 		#endregion
 
 		#region Constractor 
 
 		/// <summary>
-		/// Core クラスコンストラクタ : インスタンス生成用
+		/// コンストラクタ : インスタンス生成用
 		/// </summary>
 		/// <param name="ck"> Consumer Key </param>
 		/// <param name="cs"> Consumer Secret </param>
 		/// <param name="client"> HttpClient </param>
-		public Core(string ck, string cs, HttpClient client) : base(ck, cs) => _Client = client;
+		internal Authenticator(string ck, string cs, HttpClient client)
+		{
+			ICredentials = new TwistCredentials(ck, cs);
+			_Client = client;
+		}
 
 		/// <summary>
-		/// Core クラスコンストラクタ : 設定保持用
+		/// コンストラクタ : 設定保持用
 		/// </summary>
 		/// <param name="ck"> Consumer Key </param>
 		/// <param name="cs"> Consumer Secret </param>
@@ -52,29 +63,29 @@ namespace Twist.API
 		/// <param name="id"> User ID </param>
 		/// <param name="name"> Screen Name </param>
 		/// <param name="client"> HttpClient </param>
-		public Core(string ck, string cs, string at, string ats, string id, string name, HttpClient client)
-			: base(ck, cs, at, ats, id, name) => _Client = client;
+		internal Authenticator(string ck, string cs, string at, string ats, string id, string name, HttpClient client)
+		{
+			ICredentials = new TwistCredentials(ck, cs, at, ats, id, name);
+			_Client = client;
+		}
 
 		#endregion
 
-		#region OAuth Authorize Method's.
+		#region OAuth Authorize Method's
 
 		/// <summary>
-		/// リクエストトークンの取得を行います。
+		/// リクエスト トークンの取得を行います。
 		/// </summary>
-		/// <param name="url"> リクエストトークン取得用のエンドポイントURL </param>
+		/// <param name="url"> リクエスト トークン取得用のエンド ポイント URL </param>
 		/// <returns></returns>
-		public async Task GetRequestTokenAsync(string url)
+		async Task IAuthenticator.GetRequestTokenAsync(string url)
 		{
-			Debug.WriteLine("------------ リクエストトークン 生成開始 -----------------");
-
-			var response = await RequestAsync(base.ConsumerKey, base.ConsumerSecret, "", "", url, HttpMethod.Get);
+			IAuthenticator authenticator = this;
+			var response = await authenticator.RequestAsync(ICredentials.ConsumerKey, ICredentials.ConsumerSecret, "", "", url, HttpMethod.Get);
 			var perseData = _ParseStrings(response);
 
-			base.RequestToken = perseData["oauth_token"];
-			base.RequestTokenSecret = perseData["oauth_token_secret"];
-
-			Debug.WriteLine("------------ リクエストトークン 生成完了 -----------------");
+			ICredentials.RequestToken = perseData["oauth_token"];
+			ICredentials.RequestTokenSecret = perseData["oauth_token_secret"];
 		}
 
 		/// <summary>
@@ -82,12 +93,10 @@ namespace Twist.API
 		/// </summary>
 		/// <param name="url"> 認証ページのエンドポイントURL </param>
 		/// <returns> 認証ページの URL </returns>
-		public Uri GetAuthorizeUrl(string url)
+		 Uri IAuthenticator.GetAuthorizeUrl(string url)
 		{
-			Debug.WriteLine("------------ 認証用URL 取得シーケンス実施 -----------------");
-
-			if (base.RequestToken != null)
-				return new Uri($"{url}?oauth_token={base.RequestToken}");
+			if (ICredentials.RequestToken is not null)
+				return new Uri($"{url}?oauth_token={ICredentials.RequestToken}");
 			else
 				throw new Exception("リクエストトークンが未設定です。GetRequestTokenAsync() をコールしてください。");
 		}
@@ -98,36 +107,29 @@ namespace Twist.API
 		/// <param name="url"> Access Token 取得を行うエンドポイントURL </param>
 		/// <param name="pin"> 認証ページにて取得した PIN コード </param>
 		/// <returns> AccessToken, AccessTokenSecret, ユーザID, スクリーンネームを Tuple 形式にて返却 </returns>
-		public async Task<(string at, string ats, string uid, string sn)> GetAccessTokenAsync(string url, string pin)
+		async Task<(string at, string ats, string uid, string sn)> IAuthenticator.GetAccessTokenAsync(string url, string pin)
 		{
-			Debug.WriteLine("------------ アクセストークン 生成開始 ----------------- >> " + pin);
-
 			var parameters = new Dictionary<string, string> { { "oauth_verifier", pin } };
-			var response = await RequestAsync(base.ConsumerKey, base.ConsumerSecret,
-				base.RequestToken, base.RequestTokenSecret, url, HttpMethod.Post, parameters);
+			IAuthenticator authenticator = this;
+
+			var response = await authenticator.RequestAsync(
+				ICredentials.ConsumerKey, 
+				ICredentials.ConsumerSecret,
+				ICredentials.RequestToken, 
+				ICredentials.RequestTokenSecret, 
+				url, 
+				HttpMethod.Post, 
+				parameters
+			);
 
 			var perseData = _ParseStrings(response);
 
-			base.AccessToken = perseData["oauth_token"];
-			base.AccessTokenSecret = perseData["oauth_token_secret"];
-			base.UserId = perseData["user_id"];
-			base.ScreenName = perseData["screen_name"];
+			ICredentials.AccessToken = perseData["oauth_token"];
+			ICredentials.AccessTokenSecret = perseData["oauth_token_secret"];
+			ICredentials.UserId = perseData["user_id"];
+			ICredentials.ScreenName = perseData["screen_name"];
 
-			Debug.WriteLine("------------ アクセストークン 生成完了 -----------------");
-
-			return (base.AccessToken, base.AccessTokenSecret, base.UserId, base.ScreenName);
-		}
-
-		/// <summary>
-		/// 認証パラメータを生成します。
-		/// </summary>
-		/// <param name="parameters"> 認証パラメータ生成用データ </param>
-		/// <param name="spl"> 分割文字(規定値：アンパサンド) </param>
-		/// <param name="braket"> ブラケット(規定値："") </param>
-		/// <returns> 認証パラメータ </returns>
-		private string _OAuthParameters(IDictionary<string, string> parameters, string spl = "&", string braket = "")
-		{
-			return string.Join(spl, from p in parameters select $"{UrlEncode(p.Key)}={braket}{UrlEncode(p.Value)}{braket}");
+			return (ICredentials.AccessToken, ICredentials.AccessTokenSecret, ICredentials.UserId, ICredentials.ScreenName);
 		}
 
 		/// <summary>
@@ -142,22 +144,20 @@ namespace Twist.API
 		/// <param name="parameters"> リクエストデータ </param>
 		/// <param name="stream"></param>
 		/// <returns> リクエスト結果(謎の拡張子：JSON) </returns>
-		public async Task<string> RequestAsync(string ck, string cs, string token, string ts,
+		async Task<string> IAuthenticator.RequestAsync(string ck, string cs, string token, string ts,
 			string url, HttpMethod type, IDictionary<string, string> parameters = null, Stream stream = null)
 		{
-			Debug.WriteLine("------------ リクエスト開始 ----------------- >> " + type.ToString() + " " + url);
-
 			var oauthParameters = _GenerateParameters(token, ck);
 
-			if (type == HttpMethod.Get && parameters != null)
+			if (type == HttpMethod.Get && parameters is not null)
 				url += $"?{_OAuthParameters(parameters)}";
 
-			var request = new HttpRequestMessage(type, url);
+			HttpRequestMessage request = new(type, url);
 			HttpResponseMessage response = null;
 
-			if (oauthParameters != null)
+			if (oauthParameters is not null)
 			{
-				if (parameters != null)
+				if (parameters is not null)
 				{
 					foreach (var p in parameters)
 						oauthParameters.Add(p.Key, p.Value);
@@ -174,50 +174,42 @@ namespace Twist.API
 			{
 				try
 				{
-					if (type == HttpMethod.Get)
-					{
-						Debug.WriteLine($"---------------- リクエストヘッダ情報 {type.ToString()} --------------------");
-						Debug.WriteLine($" Header : {request.Headers.ToString()}");
-						Debug.WriteLine("---------------- リクエストヘッダ情報 ここまで -------------------------------");
-					}
 					if (type == HttpMethod.Post)
 					{
-						if (parameters != null)
+						if (parameters is not null)
 						{
-							if (stream == null)
-							{
-								request.Content = new FormUrlEncodedContent(parameters);
-							}
-							else
-							{
-								var multi = new MultipartFormDataContent("hoge");
-								multi.Add(new StreamContent(stream), "media");
-								request.Content = multi;
-							}
+							request.Content = (stream is not null) ?
+								new MultipartFormDataContent("dummy_data") { { new StreamContent(stream), "media" } } :
+								new FormUrlEncodedContent(parameters);
 						}
-
-						Debug.WriteLine($"---------------- リクエストヘッダ情報 {type.ToString()} --------------------");
-						Debug.WriteLine($" Body   : {await request.Content.ReadAsStringAsync()}");
-						Debug.WriteLine($" Header : {request.Headers.ToString()}");
-						Debug.WriteLine("---------------- リクエストヘッダ情報 ここまで -------------------------------");
 					}
 
 					request.Headers.ExpectContinue = false;
 					response = await _Client.SendAsync(request);
 
 					if (response.StatusCode != HttpStatusCode.OK)
-						throw new HttpRequestException($"HTTP 通信エラーが発生しました。" +
+						throw new HttpRequestException($"HTTP 通信エラー。" +
 							$"ステータス : {response.StatusCode} {await response.Content.ReadAsStringAsync()} 対象：HttpMultiRequestAsync()");
 				}
 				catch (HttpRequestException e) { tmp = e; }
 			});
 
-			if (tmp != null)
-				Console.WriteLine($"{tmp.StackTrace} : {tmp.Message}");
+			if (tmp is not null)
+				Debug.WriteLine($"{tmp.StackTrace} : {tmp.Message}");
 
 			var result = await response.Content.ReadAsStringAsync();
 			return result;
 		}
+
+		/// <summary>
+		/// 認証パラメータを生成します。
+		/// </summary>
+		/// <param name="parameters"> 認証パラメータ生成用データ </param>
+		/// <param name="spl"> 分割文字(規定値：アンパサンド) </param>
+		/// <param name="braket"> ブラケット(規定値："") </param>
+		/// <returns> 認証パラメータ </returns>
+		private string _OAuthParameters(IDictionary<string, string> parameters, string spl = "&", string braket = "") =>
+			string.Join(spl, from p in parameters select $"{_UrlEncode(p.Key)}={braket}{_UrlEncode(p.Value)}{braket}");
 
 		/// <summary>
 		/// Signature 生成を行います。
@@ -230,17 +222,12 @@ namespace Twist.API
 		/// <returns> HMACSHA化された Base64 シグネチャ </returns>
 		private string _GenerateSignature(string ck, string ts, string httpMethod, string url, IDictionary<string, string> parameters)
 		{
-			Debug.WriteLine("------------ シグネチャ生成開始 -----------------");
-
-			var sort = new SortedDictionary<string, string>(parameters);
-			var uri = new Uri(url);
+			SortedDictionary<string, string> sort = new(parameters);
+			Uri uri = new(url);
 			var unQueryStringUrl = $"{uri.Scheme}://{uri.Host}{uri.AbsolutePath}";
-			var signatureBase = $"{httpMethod}&{UrlEncode(unQueryStringUrl)}&{UrlEncode(_OAuthParameters(sort))}";
+			var signatureBase = $"{httpMethod}&{_UrlEncode(unQueryStringUrl)}&{_UrlEncode(_OAuthParameters(sort))}";
 
-			HMACSHA1 hmacsha1 = new HMACSHA1(Encoding.ASCII.GetBytes(UrlEncode(ck) + '&' + UrlEncode(ts ?? "")));
-
-			Debug.WriteLine("------------ シグネチャ生成完了 -----------------");
-
+			HMACSHA1 hmacsha1 = new(Encoding.ASCII.GetBytes(_UrlEncode(ck) + '&' + _UrlEncode(ts ?? "")));
 			return Convert.ToBase64String(hmacsha1.ComputeHash(Encoding.ASCII.GetBytes(signatureBase)));
 		}
 
@@ -252,8 +239,6 @@ namespace Twist.API
 		/// <returns> ソート後の認証パラメータ </returns>
 		private SortedDictionary<string, string> _GenerateParameters(string token, string ck)
 		{
-			Debug.WriteLine("------------ パラメータ生成開始 -----------------");
-
 			var ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
 			var timeStamp = Convert.ToInt64(ts.TotalSeconds).ToString();
 
@@ -268,14 +253,6 @@ namespace Twist.API
 
 			if (!string.IsNullOrEmpty(token))
 				result.Add("oauth_token", token);
-
-			Debug.WriteLine($"  oauth_consumer_key = {ck}");
-			Debug.WriteLine($"  oauth_signature_method = HMAC-SHA1");
-			Debug.WriteLine($"  oauth_timestamp = {timeStamp}");
-			Debug.WriteLine($"  oauth_nonce = {_GenerateNonce(32)}");
-			Debug.WriteLine($"  oauth_version = 1.0");
-
-			Debug.WriteLine("------------ パラメータ生成完了 -----------------");
 
 			return result;
 		}
@@ -306,7 +283,7 @@ namespace Twist.API
 		private string _GenerateNonce(int len)
 		{
 			string str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-			return str.Aggregate(new StringBuilder(len), (sb, s) => sb.Append(str[_Rand.Next(str.Length)])).ToString();
+			return str.Aggregate(new StringBuilder(len), (sb, s) => sb.Append(str[_SeedToken.Next(str.Length)])).ToString();
 		}
 
 		/// <summary>
@@ -314,7 +291,7 @@ namespace Twist.API
 		/// </summary>
 		/// <param name="value"> エンコード対象の URL </param>
 		/// <returns> エンコード後の URL </returns>
-		public string UrlEncode(string value)
+		private string _UrlEncode(string value)
 		{
 			string unreserved = @"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~";
 			var result = new StringBuilder();
@@ -329,6 +306,5 @@ namespace Twist.API
 		}
 
 		#endregion
-
 	}
 }

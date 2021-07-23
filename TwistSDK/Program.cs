@@ -9,15 +9,10 @@ namespace TwistSDK
 {
 	class Program
 	{
-
 		#region Field
 
-		#region API Keys
-
-		private const string _ConsumerKey = "your consumer key";
-		private const string _ConsumerSecret = "your consumer secret";
-
-		#endregion
+		private const string _ConsumerKey = "consumer key";
+		private const string _ConsumerSecret = "consumer secret";
 
 		#endregion Field
 
@@ -29,20 +24,29 @@ namespace TwistSDK
 
 		#endregion Properties
 
-		#region Main Method
-
-		static async Task Main(string[] args)
+		static async Task Main()
 		{
 			_Client = new HttpClient(_ClientHandler);
 			_Twitter = new Twitter(_ConsumerKey, _ConsumerSecret, _Client);
 
 			Console.WriteLine(" ----------- 認証ページ表示開始 ------------------");
-			Process.Start(await _Twitter.GenerateAuthorizeAsync());
+			Process process = new();
+			var url = await _Twitter.GenerateAuthorizeAsync();
+			try
+			{
+				process.StartInfo.UseShellExecute = true;
+				process.StartInfo.FileName = url;
+				process.Start();
+			}
+			catch (Exception)
+			{
+				throw new Exception($"Unable to open a browser. Please manually open: {url}");
+			}
+
 			Console.WriteLine(" ----------- 認証ページ表示完了 ------------------");
 
-			var pin = string.Empty;
 			Console.Write("your pin code = ");
-			pin = Console.ReadLine();
+			string pin = Console.ReadLine();
 
 			Console.WriteLine(" ----------- 認証キー取得開始 ------------------");
 			await _Twitter.GetAccessTokenAsync(pin);
@@ -51,25 +55,16 @@ namespace TwistSDK
 			Console.WriteLine(" ----------- Twitter 投稿開始 ------------------");
 
 			// 画像なしツイート
-			var text = "nyan!";
+			string text = "test";
 			await _Twitter.UpdateWithTextAsync(text);
 
 			// 画像付きツイート
-			var imagePath = @"Your hope posting picture path.";
-			Console.Write($"picture path = {imagePath}\r\n");
+			//var imagePath = @"Your hope posting picture path.";
+			//Console.Write($"picture path = {imagePath}\r\n");
 
-			await _Twitter.UpdateWithMediaAsync(text, imagePath);
+			//await _Twitter.UpdateWithMediaAsync(text, imagePath);
 
 			Console.WriteLine(" ----------- Twitter 投稿完了 ------------------");
-
-#if DEBUG
-			Console.WriteLine("続行するには何かキーを押してください．．．");
-			Console.ReadKey();
-#endif
-
 		}
-
-		#endregion Main Method
-
 	}
 }

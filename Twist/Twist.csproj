@@ -1,27 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks Condition="'$(LibraryFrameworks)'==''">net45;net40;netstandard2.0</TargetFrameworks>
-    <TargetFrameworks Condition="'$(LibraryFrameworks)'!=''">$(LibraryFrameworks)</TargetFrameworks>
-    <Version>4.0.1</Version>
-    <Authors>Asteriskx</Authors>
-    <Copyright>Copyright (c) Asteriskx 2018.</Copyright>
-    <Description>Twist for Twitter Wrapper API Library for .NET Standard.</Description>
-    <PackageReleaseNotes>nyan!</PackageReleaseNotes>
-    <PackageTags>Twist</PackageTags>
+    <TargetFramework>net5.0</TargetFramework>
+    <Version>5.0.0</Version>
+    <Authors>Asteriskx.</Authors>
+    <Description>Twist for Simple Twitter Wrapper API Library for .NET 5.</Description>
+    <Company />
+    <Copyright>Asteriskx.</Copyright>
+    <RepositoryUrl>https://github.com/Asteriskx/TwistSDK</RepositoryUrl>
+    <PackageReleaseNotes />
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageProjectUrl>https://github.com/Asteriskx/TwistSDK</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/Asteriskx/TwistSDK/blob/master/LICENSE</PackageLicenseUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard2.0\Twist.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
 </Project>
